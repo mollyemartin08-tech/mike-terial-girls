@@ -1,0 +1,144 @@
+  #include "Arduino.h"
+  #include "Enes100.h"
+
+  const int enA = 9;
+  const int in1 = 8;
+  const int in2 = 7;
+  const int in3 = 6;
+  const int in4 = 5;
+  const int enB = 3;
+  const int button = 12;
+  const int trigPin = 11;
+  const int echoPin = 10;
+
+  float xPos;
+  float yPos;
+  float theta;
+  float duration;
+  float distance;
+  bool turnsComplete = false;
+  bool obstacleDetected = false;
+
+  void getLocation(){
+      Enes100.updateLocation();
+      xPos = Enes100.getX();
+      yPos = Enes100.getY();
+      theta = Enes100.getTheta();
+      Enes100.print("X = "); Enes100.println(xPos);
+      Enes100.print("Y = "); Enes100.println(yPos);
+      Enes100.print("Theta = "); Enes100.println(theta);
+  }
+
+  void setLeftMotorPWM(float PWM) {
+    if (PWM > 255) {
+      PWM = 255;
+    }
+    if (PWM < -255) {
+      PWM = -255;
+    }
+    if (PWM >= 0) {
+      digitalWrite(in1, HIGH);
+      digitalWrite(in2, LOW);
+      analogWrite(enA, PWM);        
+    } 
+    else {
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+      analogWrite(enA, abs(PWM));   
+    }
+  }
+
+  void setRightMotorPWM(float PWM) {
+    if (PWM > 255) {
+      PWM = 255;
+    }
+    if (PWM < -255) {
+      PWM = -255;
+    }
+    if (PWM >= 0) {
+      digitalWrite(in3, HIGH);    
+      digitalWrite(in4, LOW);   
+      analogWrite(enB, PWM);
+    } else {
+      digitalWrite(in3, LOW);
+      digitalWrite(in4, HIGH);
+      analogWrite(enB, abs(PWM));  
+    }
+  }
+
+  void turnOffMotors(){
+    analogWrite(enA, 0);
+    analogWrite(enB, 0); 
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
+  }
+
+void turnTo(float targetHeading) {
+    float tolerance = 0.1; 
+    float Kp = 50;       
+    float error = targetHeading - theta;
+    if (abs(error) < tolerance) {
+        turnOffMotors();
+    } 
+    else {
+        float speed = Kp * error;
+        if (speed > 255) speed = 255;
+        if (speed < -255) speed = -255;
+        setLeftMotorPWM(-speed);
+        setRightMotorPWM(speed);
+    }
+}
+
+void driveToX(float targetX) {
+  
+}
+
+void detectObstacle(){
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+    duration = pulseIn(echoPin, HIGH);
+    distance = (duration*.0343)/2;
+    if (distance < ___){
+      obstacleDetected = true;
+    }
+}
+
+void turn90(){
+  const int turnTime = 2000;
+  const int turnSpeed = 255;
+  setLeftMotorPWM(-turnSpeed);
+  setRightMotorPWM(turnSpeed);
+  delay(turnTime);
+  turnOffMotors();
+} 
+
+void setup() {
+  pinMode(enA, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(button, INPUT_PULLUP);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, OUTPUT);
+  Enes100.begin("Mike-terial Girls", MATERIAL, 136, 1201);
+  Enes100.println("Starting driving");
+}
+
+void loop() {
+    getLocation();
+    int buttonState = digitalRead(button);
+    if (buttonState == LOW) {
+      Enes100.println("pressed");
+    }
+    else{
+      Enes100.println("not pressed");
+    }
+    turnTo(0.0);
+  }
